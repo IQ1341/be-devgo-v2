@@ -1,14 +1,9 @@
-import bcrypt
-from "bcryptjs";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
-import jwt
-from "jsonwebtoken";
+import * as repository from "./auth.repository.js";
 
-import * as repository
-from "./auth.repository.js";
-
-export const login =
-async (
+export const login = async (
   username,
   password
 ) => {
@@ -47,7 +42,5 @@ async (
       }
     );
 
-  return {
-    token
-  };
+  return token;
 };

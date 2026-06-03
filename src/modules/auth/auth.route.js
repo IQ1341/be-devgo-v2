@@ -2,7 +2,8 @@ import express
 from "express";
 
 import {
-  login
+  login,
+  logout
 }
 from "./auth.controller.js";
 
@@ -13,5 +14,7 @@ router.post(
   "/login",
   login
 );
+
+router.post("/logout", logout);
 
 export default router;

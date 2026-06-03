@@ -1,48 +1,25 @@
 import jwt from "jsonwebtoken";
 
-export const auth = (
-  req,
-  res,
-  next
-) => {
+export const auth = (req, res, next) => {
   try {
+    // ✅ Baca dari cookie, bukan Authorization header
+    const token = req.cookies?.admin_token;
 
-    const authHeader =
-      req.headers.authorization;
-
-    if (!authHeader) {
+    if (!token) {
       return res.status(401).json({
         success: false,
         message: "Token required"
       });
     }
 
-    const token =
-      authHeader.split(" ")[1];
-
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid token format"
-      });
-    }
-
-    const decoded =
-      jwt.verify(
-        token,
-        process.env.JWT_SECRET
-      );
-
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
-
     next();
 
   } catch (error) {
-
     return res.status(401).json({
       success: false,
       message: "Unauthorized"
     });
-
   }
 };
