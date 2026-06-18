@@ -57,10 +57,16 @@ export const findAll = async (
     ];
   }
 
-  const data = await Project.find(query)
-    .sort({ createdAt: -1 })
+  let mongoQuery = Project.find(query)
+  .sort({ createdAt: -1 });
+
+if (limit > 0) {
+  mongoQuery = mongoQuery
     .skip(skip)
     .limit(limit);
+}
+
+const data = await mongoQuery;
 
   const total = await Project.countDocuments(query);
 
@@ -108,4 +114,44 @@ export const updateById = async (id, payload) => {
 ========================= */
 export const deleteById = async (id) => {
   return await Project.findByIdAndDelete(id);
+};
+
+export const getStats = async () => {
+  const total = await Project.countDocuments();
+
+  const completed =
+    await Project.countDocuments({
+      status: "completed"
+    });
+
+  const onProgress =
+    await Project.countDocuments({
+      status: "on-progress"
+    });
+
+  const planning =
+    await Project.countDocuments({
+      status: "planning"
+    });
+
+  const avgProgress = await Project.aggregate([
+    {
+      $group: {
+        _id: null,
+        avg: {
+          $avg: "$progress"
+        }
+      }
+    }
+  ]);
+
+  return {
+    total,
+    completed,
+    onProgress,
+    planning,
+    avgProgress: Math.round(
+      avgProgress[0]?.avg || 0
+    )
+  };
 };

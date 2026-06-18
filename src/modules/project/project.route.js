@@ -7,7 +7,8 @@ import {
   getProjectById,
   getProjectByCode,
   updateProject,
-  deleteProject
+  deleteProject,
+  getProjectStats
 } from "./project.controller.js";
 
 import { validate } from "../../middlewares/validation.middleware.js";
@@ -48,6 +49,12 @@ router.get(
   getProjects
 );
 
+router.get(
+  "/stats",
+  auth,
+  getProjectStats
+);
+
 // Get by ID
 router.get(
   "/:id",
@@ -76,5 +83,7 @@ router.delete(
   auth,
   deleteProject
 );
+
+
 
 export default router;

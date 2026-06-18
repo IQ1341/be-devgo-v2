@@ -106,3 +106,7 @@ export const deleteProject = async (id) => {
 
   return project;
 };
+
+export const getProjectStats = async () => {
+  return repository.getStats();
+};

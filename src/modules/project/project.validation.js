@@ -20,7 +20,10 @@ export const createProjectClientSchema = Joi.object({
 
   budget: Joi.number().allow(null),
 
-  duration: Joi.number().allow(null)
+  duration: Joi.number().allow(null),
+
+  deadline: Joi.date().optional().allow(null, "")
+
 });
 
 /* =================================================

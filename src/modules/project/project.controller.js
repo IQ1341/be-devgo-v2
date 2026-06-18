@@ -41,7 +41,7 @@ export const createFromAdmin = async (req, res, next) => {
 ========================= */
 export const getProjects = async (req, res, next) => {
   try {
-    const page = Number(req.query.page) || 1;
+    const page = Number(req.query.page) || 4;
     const limit = Number(req.query.limit) || 10;
     const search = req.query.search;
     const status = req.query.status;
@@ -61,6 +61,17 @@ export const getProjects = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+export const getAllProjects = async (req, res) => {
+  const projects = await Project.find()
+    .sort({ createdAt: -1 });
+
+  res.json({
+    success: true,
+    total: projects.length,
+    data: projects
+  });
 };
 
 /* =========================
@@ -130,6 +141,24 @@ export const deleteProject = async (req, res, next) => {
       message: "Project deleted successfully"
     });
 
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getProjectStats = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const stats =
+      await service.getProjectStats();
+
+    res.json({
+      success: true,
+      data: stats
+    });
   } catch (error) {
     next(error);
   }
