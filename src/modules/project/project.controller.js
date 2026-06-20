@@ -163,3 +163,28 @@ export const getProjectStats = async (
     next(error);
   }
 };
+
+/* =========================
+   UPDATE BUDGET STATUS
+========================= */
+export const updateBudgetStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { budget_status, budget_paid, budget_dp } = req.body;
+
+    const result = await service.updateBudgetStatus(id, {
+      budget_status,
+      budget_paid: budget_paid || 0,
+      budget_dp: budget_dp || 0
+    });
+
+    res.json({
+      success: true,
+      message: "Budget status updated successfully",
+      data: result
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};

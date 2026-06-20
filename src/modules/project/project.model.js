@@ -155,6 +155,27 @@ const projectSchema = new mongoose.Schema(
       default: 0
     },
 
+    budget_status: {
+      type: String,
+      enum: ["unpaid", "dp", "paid"],
+      default: "unpaid"
+    },
+
+    budget_paid: {
+      type: Number,
+      default: 0
+    },
+
+    budget_dp: {
+      type: Number,
+      default: 0
+    },
+
+    budget_notes: {
+      type: String,
+      default: ""
+    },
+
     /* =========================
        VISIBILITY
     ========================= */

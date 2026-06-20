@@ -7,6 +7,7 @@ import {
   getProjectById,
   getProjectByCode,
   updateProject,
+  updateBudgetStatus,
   deleteProject,
   getProjectStats
 } from "./project.controller.js";
@@ -84,6 +85,11 @@ router.delete(
   deleteProject
 );
 
-
+// Update budget status
+router.patch(
+  "/:id/budget-status",
+  auth,
+  updateBudgetStatus
+);
 
 export default router;

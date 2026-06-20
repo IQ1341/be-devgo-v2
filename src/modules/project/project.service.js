@@ -98,7 +98,17 @@ export const updateProject = async (id, payload) => {
    DELETE PROJECT
 ========================= */
 export const deleteProject = async (id) => {
-  const project = await repository.deleteById(id);
+  const project = await repository.deleteByIdOrCode(id);
+
+  if (!project) {
+    throw new Error("Project not found");
+  }
+
+  return project;
+};
+
+export const updateBudgetStatus = async (id, payload) => {
+  const project = await repository.updateBudgetStatus(id, payload);
 
   if (!project) {
     throw new Error("Project not found");

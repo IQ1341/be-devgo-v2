@@ -1,4 +1,5 @@
 import Project from "./project.model.js";
+import mongoose from "mongoose";
 
 /* =========================
    CREATE
@@ -116,6 +117,25 @@ export const deleteById = async (id) => {
   return await Project.findByIdAndDelete(id);
 };
 
+export const deleteByIdOrCode = async (identifier) => {
+  if (/^[a-f\d]{24}$/i.test(identifier) && mongoose.Types.ObjectId.isValid(identifier)) {
+    return await Project.findByIdAndDelete(identifier);
+  }
+
+  return await Project.findOneAndDelete({ code: identifier });
+};
+
+export const updateBudgetStatus = async (id, payload) => {
+  return await Project.findByIdAndUpdate(
+    id,
+    payload,
+    {
+      new: true,
+      runValidators: true
+    }
+  );
+};
+
 export const getStats = async () => {
   const total = await Project.countDocuments();
 
@@ -145,6 +165,30 @@ export const getStats = async () => {
     }
   ]);
 
+  // Budget tracking stats
+  const budgetStats = await Project.aggregate([
+    {
+      $group: {
+        _id: "$budget_status",
+        count: { $sum: 1 },
+        totalBudget: { $sum: "$budget" },
+        totalPaid: { $sum: "$budget_paid" },
+        totalDP: { $sum: "$budget_dp" }
+      }
+    }
+  ]);
+
+  const unpaidProjects = budgetStats.find(s => s._id === "unpaid") || { count: 0, totalBudget: 0, totalPaid: 0, totalDP: 0 };
+  const dpProjects = budgetStats.find(s => s._id === "dp") || { count: 0, totalBudget: 0, totalPaid: 0, totalDP: 0 };
+  const paidProjects = budgetStats.find(s => s._id === "paid") || { count: 0, totalBudget: 0, totalPaid: 0, totalDP: 0 };
+
+  const totalUnpaidBudget = unpaidProjects.totalBudget - unpaidProjects.totalPaid;
+  const totalDPBudget = dpProjects.totalBudget - dpProjects.totalPaid;
+  const totalPaidBudget = paidProjects.totalPaid;
+
+  const totalCollectedBudget = totalPaidBudget + dpProjects.totalPaid;
+  const totalPendingBudget = totalUnpaidBudget + totalDPBudget;
+
   return {
     total,
     completed,
@@ -152,6 +196,29 @@ export const getStats = async () => {
     planning,
     avgProgress: Math.round(
       avgProgress[0]?.avg || 0
-    )
+    ),
+    budget: {
+      unpaid: {
+        count: unpaidProjects.count,
+        total: unpaidProjects.totalBudget,
+        collected: unpaidProjects.totalPaid,
+        pending: totalUnpaidBudget
+      },
+      dp: {
+        count: dpProjects.count,
+        total: dpProjects.totalBudget,
+        collected: dpProjects.totalPaid,
+        pending: totalDPBudget
+      },
+      paid: {
+        count: paidProjects.count,
+        total: paidProjects.totalBudget,
+        collected: paidProjects.totalPaid,
+        pending: 0
+      },
+      totalCollected: totalCollectedBudget,
+      totalPending: totalPendingBudget,
+      totalBudget: unpaidProjects.totalBudget + dpProjects.totalBudget + paidProjects.totalBudget
+    }
   };
 };
