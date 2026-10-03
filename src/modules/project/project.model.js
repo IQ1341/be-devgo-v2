@@ -84,6 +84,16 @@ const projectSchema = new mongoose.Schema(
       trim: true
     },
 
+    website_url: {
+      type: String,
+      default: ""
+    },
+
+    github_url: {
+      type: String,
+      default: ""
+    },
+
     service: {
       type: String,
       default: "",
