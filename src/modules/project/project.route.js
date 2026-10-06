@@ -7,7 +7,7 @@ import {
   getProjectById,
   getProjectByCode,
   updateProject,
-  updateBudgetStatus,
+  recordPayment,
   deleteProject,
   getProjectStats
 } from "./project.controller.js";
@@ -17,7 +17,8 @@ import { auth } from "../../middlewares/auth.middleware.js";
 
 import {
   createProjectClientSchema,
-  createProjectAdminSchema
+  createProjectAdminSchema,
+  recordPaymentSchema
 } from "./project.validation.js";
 
 const router = express.Router();
@@ -85,11 +86,6 @@ router.delete(
   deleteProject
 );
 
-// Update budget status
-router.patch(
-  "/:id/budget-status",
-  auth,
-  updateBudgetStatus
-);
+router.post("/:id/payments", auth, validate(recordPaymentSchema), recordPayment);
 
 export default router;

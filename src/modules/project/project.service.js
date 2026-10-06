@@ -78,14 +78,30 @@ export const getProjectByCode = async (code) => {
     throw new Error("Project not found");
   }
 
-  return project;
+  const publicProject = project.toObject();
+  delete publicProject.payments;
+  return publicProject;
 };
 
 /* =========================
    UPDATE PROJECT
 ========================= */
 export const updateProject = async (id, payload) => {
-  const project = await repository.updateById(id, payload);
+  const current = await repository.findById(id);
+  if (!current) throw new Error("Project not found");
+
+  const safePayload = { ...payload };
+  delete safePayload.budget_paid;
+  delete safePayload.budget_dp;
+  delete safePayload.budget_status;
+  if (safePayload.budget !== undefined && Number(safePayload.budget) < Number(current.budget_paid || 0)) {
+    throw new Error("Total budget tidak boleh lebih kecil dari pembayaran yang sudah diterima");
+  }
+  const nextBudget = safePayload.budget === undefined ? Number(current.budget || 0) : Number(safePayload.budget || 0);
+  const paid = Number(current.budget_paid || 0);
+  safePayload.budget_status = nextBudget > 0 && paid >= nextBudget ? "paid" : paid > 0 ? "dp" : "unpaid";
+
+  const project = await repository.updateById(id, safePayload);
 
   if (!project) {
     throw new Error("Project not found");
@@ -107,13 +123,9 @@ export const deleteProject = async (id) => {
   return project;
 };
 
-export const updateBudgetStatus = async (id, payload) => {
-  const project = await repository.updateBudgetStatus(id, payload);
-
-  if (!project) {
-    throw new Error("Project not found");
-  }
-
+export const recordPayment = async (id, payload) => {
+  const project = await repository.recordPayment(id, payload);
+  if (!project) throw new Error("Project not found");
   return project;
 };
 

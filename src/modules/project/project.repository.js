@@ -125,15 +125,24 @@ export const deleteByIdOrCode = async (identifier) => {
   return await Project.findOneAndDelete({ code: identifier });
 };
 
-export const updateBudgetStatus = async (id, payload) => {
-  return await Project.findByIdAndUpdate(
-    id,
-    payload,
-    {
-      new: true,
-      runValidators: true
-    }
-  );
+export const recordPayment = async (id, payment) => {
+  const project = await Project.findById(id);
+  if (!project) return null;
+
+  const amount = Number(payment.amount);
+  const budget = Number(project.budget || 0);
+  const alreadyPaid = Number(project.budget_paid || 0);
+  const remaining = Math.max(budget - alreadyPaid, 0);
+  if (budget <= 0) throw new Error("Tetapkan total budget project sebelum mencatat pembayaran");
+  if (!Number.isFinite(amount) || amount <= 0) throw new Error("Jumlah pembayaran harus lebih dari 0");
+  if (amount > remaining) throw new Error("Pembayaran melebihi sisa tagihan");
+
+  project.payments.push(payment);
+  project.budget_paid = alreadyPaid + amount;
+  project.budget_status = project.budget_paid >= budget
+    ? "paid"
+    : project.budget_paid > 0 ? "dp" : "unpaid";
+  return project.save();
 };
 
 export const getStats = async () => {
@@ -167,27 +176,32 @@ export const getStats = async () => {
 
   // Budget tracking stats
   const budgetStats = await Project.aggregate([
-    {
-      $group: {
-        _id: "$budget_status",
-        count: { $sum: 1 },
-        totalBudget: { $sum: "$budget" },
-        totalPaid: { $sum: "$budget_paid" },
-        totalDP: { $sum: "$budget_dp" }
-      }
-    }
+    { $project: {
+      budget: { $ifNull: ["$budget", 0] },
+      paid: { $ifNull: ["$budget_paid", 0] },
+      status: { $switch: {
+        branches: [
+          { case: { $and: [{ $gt: [{ $ifNull: ["$budget", 0] }, 0] }, { $gte: [{ $ifNull: ["$budget_paid", 0] }, { $ifNull: ["$budget", 0] }] }] }, then: "paid" },
+          { case: { $gt: [{ $ifNull: ["$budget_paid", 0] }, 0] }, then: "dp" }
+        ],
+        default: "unpaid"
+      } }
+    } },
+    { $group: {
+      _id: "$status", count: { $sum: 1 }, totalBudget: { $sum: "$budget" },
+      totalPaid: { $sum: "$paid" }, totalPending: { $sum: { $max: [{ $subtract: ["$budget", "$paid"] }, 0] } }
+    } }
   ]);
 
-  const unpaidProjects = budgetStats.find(s => s._id === "unpaid") || { count: 0, totalBudget: 0, totalPaid: 0, totalDP: 0 };
-  const dpProjects = budgetStats.find(s => s._id === "dp") || { count: 0, totalBudget: 0, totalPaid: 0, totalDP: 0 };
-  const paidProjects = budgetStats.find(s => s._id === "paid") || { count: 0, totalBudget: 0, totalPaid: 0, totalDP: 0 };
+  const unpaidProjects = budgetStats.find(s => s._id === "unpaid") || { count: 0, totalBudget: 0, totalPaid: 0, totalPending: 0 };
+  const dpProjects = budgetStats.find(s => s._id === "dp") || { count: 0, totalBudget: 0, totalPaid: 0, totalPending: 0 };
+  const paidProjects = budgetStats.find(s => s._id === "paid") || { count: 0, totalBudget: 0, totalPaid: 0, totalPending: 0 };
 
-  const totalUnpaidBudget = unpaidProjects.totalBudget - unpaidProjects.totalPaid;
-  const totalDPBudget = dpProjects.totalBudget - dpProjects.totalPaid;
+  const totalUnpaidBudget = unpaidProjects.totalPending;
+  const totalDPBudget = dpProjects.totalPending;
   const totalPaidBudget = paidProjects.totalPaid;
-
-  const totalCollectedBudget = totalPaidBudget + dpProjects.totalPaid;
-  const totalPendingBudget = totalUnpaidBudget + totalDPBudget;
+  const totalCollectedBudget = unpaidProjects.totalPaid + dpProjects.totalPaid + totalPaidBudget;
+  const totalPendingBudget = totalUnpaidBudget + totalDPBudget + paidProjects.totalPending;
 
   return {
     total,
@@ -214,7 +228,7 @@ export const getStats = async () => {
         count: paidProjects.count,
         total: paidProjects.totalBudget,
         collected: paidProjects.totalPaid,
-        pending: 0
+        pending: paidProjects.totalPending
       },
       totalCollected: totalCollectedBudget,
       totalPending: totalPendingBudget,

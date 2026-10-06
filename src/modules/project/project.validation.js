@@ -1,5 +1,12 @@
 import Joi from "joi";
 
+export const recordPaymentSchema = Joi.object({
+  amount: Joi.number().positive().required(),
+  paidAt: Joi.date().optional(),
+  method: Joi.string().trim().max(60).allow("").optional(),
+  note: Joi.string().trim().max(300).allow("").optional()
+});
+
 /* =================================================
    CLIENT PUBLIC FORM (NO CODE)
 ================================================= */
@@ -23,14 +30,6 @@ export const createProjectClientSchema = Joi.object({
   duration: Joi.number().allow(null),
 
   deadline: Joi.date().optional().allow(null, ""),
-
-  budget_status: Joi.string()
-    .valid("unpaid", "dp", "paid")
-    .optional(),
-
-  budget_paid: Joi.number().allow(null).default(0),
-
-  budget_dp: Joi.number().allow(null).default(0),
 
   budget_notes: Joi.string().allow("")
 
@@ -67,14 +66,6 @@ export const createProjectAdminSchema = Joi.object({
   duration: Joi.number().allow(null),
 
   deadline: Joi.date().optional().allow(null, ""),
-
-  budget_status: Joi.string()
-    .valid("unpaid", "dp", "paid")
-    .optional(),
-
-  budget_paid: Joi.number().allow(null).default(0),
-
-  budget_dp: Joi.number().allow(null).default(0),
 
   budget_notes: Joi.string().allow("")
 });

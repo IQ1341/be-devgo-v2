@@ -164,26 +164,16 @@ export const getProjectStats = async (
   }
 };
 
-/* =========================
-   UPDATE BUDGET STATUS
-========================= */
-export const updateBudgetStatus = async (req, res, next) => {
+export const recordPayment = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const { budget_status, budget_paid, budget_dp } = req.body;
-
-    const result = await service.updateBudgetStatus(id, {
-      budget_status,
-      budget_paid: budget_paid || 0,
-      budget_dp: budget_dp || 0
+    const { amount, paidAt, method = "", note = "" } = req.body;
+    const result = await service.recordPayment(req.params.id, {
+      amount: Number(amount),
+      paidAt: paidAt ? new Date(paidAt) : new Date(),
+      method,
+      note
     });
-
-    res.json({
-      success: true,
-      message: "Budget status updated successfully",
-      data: result
-    });
-
+    res.status(201).json({ success: true, message: "Pembayaran berhasil dicatat", data: result });
   } catch (error) {
     next(error);
   }

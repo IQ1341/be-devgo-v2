@@ -64,6 +64,16 @@ const documentSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const paymentSchema = new mongoose.Schema(
+  {
+    amount: { type: Number, required: true, min: 1 },
+    paidAt: { type: Date, required: true, default: Date.now },
+    method: { type: String, trim: true, default: "" },
+    note: { type: String, trim: true, default: "" }
+  },
+  { timestamps: true }
+);
+
 const projectSchema = new mongoose.Schema(
   {
     /* =========================
@@ -185,6 +195,8 @@ const projectSchema = new mongoose.Schema(
       type: String,
       default: ""
     },
+
+    payments: { type: [paymentSchema], default: [] },
 
     /* =========================
        VISIBILITY
