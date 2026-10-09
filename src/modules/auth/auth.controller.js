@@ -22,8 +22,8 @@ export const login = async (
       token,
       {
         httpOnly: true,
-        secure: false, // true jika HTTPS
-        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         maxAge:
           7 * 24 * 60 * 60 * 1000
       }
@@ -31,7 +31,8 @@ export const login = async (
 
     res.json({
       success: true,
-      message: "Login berhasil"
+      message: "Login berhasil",
+      token
     });
 
   } catch (error) {
@@ -42,8 +43,8 @@ export const login = async (
 export const logout = (req, res) => {
   res.clearCookie("admin_token", {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
   });
 
