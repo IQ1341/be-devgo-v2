@@ -1,18 +1,18 @@
 import app from "./app.js";
 import connectDB from "./config/database.js";
 import { env } from "./config/env.js";
-import "dotenv/config";
-
-console.log(process.env.MONGODB_URI);
 
 const startServer = async () => {
-  await connectDB();
+  try {
+    await connectDB();
 
-  app.listen(env.port, () => {
-    console.log(
-      `Server running on port ${env.port}`
-    );
-  });
+    app.listen(env.port, () => {
+      console.log(`Server running on port ${env.port}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error.message);
+    process.exitCode = 1;
+  }
 };
 
 startServer();

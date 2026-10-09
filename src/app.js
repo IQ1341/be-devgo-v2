@@ -15,9 +15,20 @@ const app = express();
 app.use(helmet());
 
 // CORS
+const allowedOrigins = [
+  "http://localhost:4321",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: "http://localhost:4321", // Astro
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Origin tidak diizinkan"));
+    },
     credentials: true,
   })
 );
@@ -41,6 +52,16 @@ app.get("/", (req, res) => {
     success: true,
     message: "API Running",
   });
+});
+
+// Pastikan database siap sebelum request API diproses
+app.use("/api/v1", async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 // API Routes
