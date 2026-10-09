@@ -8,6 +8,7 @@ import cookieParser from "cookie-parser";
 import routes from "./routes/index.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import { notFound } from "./middlewares/notFound.middleware.js";
+import connectDB from "./config/database.js";
 
 const app = express();
 
