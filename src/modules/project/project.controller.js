@@ -178,3 +178,22 @@ export const recordPayment = async (req, res, next) => {
     next(error);
   }
 };
+
+export const issueInvoice = async (req, res, next) => {
+  try {
+    const result = await service.issueInvoice(req.params.id, req.body);
+    res.status(201).json({ success: true, message: "Invoice berhasil diterbitkan", data: result.invoice });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getPublicInvoice = async (req, res, next) => {
+  try {
+    const result = await service.getPublicInvoice(req.params.token);
+    res.set("Cache-Control", "no-store");
+    res.json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -1,5 +1,6 @@
 import * as repository from "./project.repository.js";
 import { generateProjectCode } from "../../utils/generateProjectCode.js";
+import { randomBytes } from "node:crypto";
 
 /* =========================
    CREATE FROM CLIENT (PUBLIC)
@@ -80,6 +81,7 @@ export const getProjectByCode = async (code) => {
 
   const publicProject = project.toObject();
   delete publicProject.payments;
+  delete publicProject.invoice;
   return publicProject;
 };
 
@@ -127,6 +129,56 @@ export const recordPayment = async (id, payload) => {
   const project = await repository.recordPayment(id, payload);
   if (!project) throw new Error("Project not found");
   return project;
+};
+
+export const issueInvoice = async (id, { dueDate, notes = "" }) => {
+  const project = await repository.findById(id);
+  if (!project) throw new Error("Project not found");
+  if (!(Number(project.budget) > 0)) throw new Error("Tetapkan budget project sebelum menerbitkan invoice");
+  if (project.invoice?.status === "issued") throw new Error("Invoice project ini sudah diterbitkan");
+
+  const now = new Date();
+  const month = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
+  project.invoice = {
+    number: `INV-${month}-${randomBytes(4).toString("hex").toUpperCase()}`,
+    issuedAt: now,
+    dueDate: new Date(dueDate),
+    notes,
+    shareToken: randomBytes(32).toString("hex"),
+    status: "issued"
+  };
+  await project.save();
+  return project;
+};
+
+export const getPublicInvoice = async (token) => {
+  const project = await repository.findByInvoiceToken(token);
+  if (!project) throw new Error("Invoice tidak ditemukan atau sudah tidak aktif");
+
+  const total = Number(project.budget || 0);
+  const paid = Math.min(Number(project.budget_paid || 0), total);
+  const remaining = Math.max(total - paid, 0);
+  const dueDate = new Date(project.invoice.dueDate);
+  const isOverdue = remaining > 0 && dueDate < new Date(new Date().setHours(0, 0, 0, 0));
+
+  return {
+    invoice: {
+      number: project.invoice.number,
+      issuedAt: project.invoice.issuedAt,
+      dueDate: project.invoice.dueDate,
+      notes: project.invoice.notes,
+      status: remaining === 0 ? "paid" : isOverdue ? "overdue" : paid > 0 ? "partial" : "issued",
+      total,
+      paid,
+      remaining,
+      payments: (project.payments || []).map(({ amount, paidAt, method }) => ({ amount, paidAt, method }))
+    },
+    project: {
+      title: project.title,
+      client: project.client,
+      service: project.service
+    }
+  };
 };
 
 export const getProjectStats = async () => {

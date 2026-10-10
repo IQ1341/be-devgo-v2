@@ -7,6 +7,11 @@ export const recordPaymentSchema = Joi.object({
   note: Joi.string().trim().max(300).allow("").optional()
 });
 
+export const issueInvoiceSchema = Joi.object({
+  dueDate: Joi.date().iso().required(),
+  notes: Joi.string().trim().max(1000).allow("").default("")
+});
+
 /* =================================================
    CLIENT PUBLIC FORM (NO CODE)
 ================================================= */

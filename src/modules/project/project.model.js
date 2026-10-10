@@ -74,6 +74,15 @@ const paymentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+const invoiceSchema = new mongoose.Schema({
+  number: { type: String, required: true, trim: true },
+  issuedAt: { type: Date, required: true, default: Date.now },
+  dueDate: { type: Date, required: true },
+  notes: { type: String, trim: true, default: "", maxlength: 1000 },
+  shareToken: { type: String, required: true, index: true },
+  status: { type: String, enum: ["issued", "cancelled"], default: "issued" }
+}, { _id: false });
+
 const projectSchema = new mongoose.Schema(
   {
     /* =========================
@@ -197,6 +206,8 @@ const projectSchema = new mongoose.Schema(
     },
 
     payments: { type: [paymentSchema], default: [] },
+
+    invoice: { type: invoiceSchema, default: undefined },
 
     /* =========================
        VISIBILITY

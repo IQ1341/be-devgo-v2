@@ -9,7 +9,9 @@ import {
   updateProject,
   recordPayment,
   deleteProject,
-  getProjectStats
+  getProjectStats,
+  issueInvoice,
+  getPublicInvoice
 } from "./project.controller.js";
 
 import { validate } from "../../middlewares/validation.middleware.js";
@@ -18,7 +20,8 @@ import { auth } from "../../middlewares/auth.middleware.js";
 import {
   createProjectClientSchema,
   createProjectAdminSchema,
-  recordPaymentSchema
+  recordPaymentSchema,
+  issueInvoiceSchema
 } from "./project.validation.js";
 
 const router = express.Router();
@@ -39,6 +42,8 @@ router.get(
   "/code/:code",
   getProjectByCode
 );
+
+router.get("/invoice/:token", getPublicInvoice);
 
 /* =========================
    ADMIN ROUTES
@@ -87,5 +92,6 @@ router.delete(
 );
 
 router.post("/:id/payments", auth, validate(recordPaymentSchema), recordPayment);
+router.post("/:id/invoice", auth, validate(issueInvoiceSchema), issueInvoice);
 
 export default router;

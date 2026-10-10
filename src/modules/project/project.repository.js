@@ -96,6 +96,10 @@ export const findByCode = async (code) => {
   return await Project.findOne({ code });
 };
 
+export const findByInvoiceToken = async (token) => {
+  return await Project.findOne({ "invoice.shareToken": token, "invoice.status": "issued" });
+};
+
 /* =========================
    UPDATE
 ========================= */
